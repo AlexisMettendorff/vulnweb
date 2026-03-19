@@ -7,29 +7,60 @@ function escapeHtml(string $value): string
     return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 }
 
-function validatePort($value): ?int
+function diagnosticTargets(): array
 {
-    if ($value === null || $value === '') {
-        return 80;
+    return [
+        'db' => [
+            'label' => 'Base de donnees',
+            'address' => 'tcp://devsecops-bdd:3306',
+            'port' => 3306,
+        ],
+        'web' => [
+            'label' => 'Application web',
+            'address' => 'tcp://devsecops-web:80',
+            'port' => 80,
+        ],
+        'adminer' => [
+            'label' => 'Adminer',
+            'address' => 'tcp://devsecops-adminer:8080',
+            'port' => 8080,
+        ],
+    ];
+}
+
+function resolveDiagnosticTarget(string $targetId): ?array
+{
+    switch ($targetId) {
+        case 'db':
+            return [
+                'label' => 'Base de donnees',
+                'address' => 'tcp://devsecops-bdd:3306',
+                'port' => 3306,
+            ];
+
+        case 'web':
+            return [
+                'label' => 'Application web',
+                'address' => 'tcp://devsecops-web:80',
+                'port' => 80,
+            ];
+
+        case 'adminer':
+            return [
+                'label' => 'Adminer',
+                'address' => 'tcp://devsecops-adminer:8080',
+                'port' => 8080,
+            ];
+
+        default:
+            return null;
     }
-
-    if (!ctype_digit((string) $value)) {
-        return null;
-    }
-
-    $port = (int) $value;
-
-    if ($port < 1 || $port > 65535) {
-        return null;
-    }
-
-    return $port;
 }
 
 $dbConfig = $config['database'];
+$diagnosticTargets = diagnosticTargets();
 $search = trim($_GET['search'] ?? '');
-$ip = trim($_GET['ip'] ?? '');
-$portInput = trim((string) ($_GET['port'] ?? '80'));
+$targetId = trim($_GET['target'] ?? '');
 $results = [];
 $databaseError = null;
 $searchError = null;
@@ -64,18 +95,15 @@ if ($search !== '' && $pdo instanceof PDO) {
     }
 }
 
-if ($ip !== '' || isset($_GET['port'])) {
-    $validatedIp = filter_var($ip, FILTER_VALIDATE_IP);
-    $validatedPort = validatePort($portInput);
+if ($targetId !== '') {
+    $diagnosticTarget = resolveDiagnosticTarget($targetId);
 
-    if ($validatedIp === false) {
-        $diagnosticMessage = 'Adresse IP invalide.';
-    } elseif ($validatedPort === null) {
-        $diagnosticMessage = 'Port invalide.';
+    if ($diagnosticTarget === null) {
+        $diagnosticMessage = 'Cible de diagnostic invalide.';
     } else {
         $startTime = microtime(true);
         $socket = @stream_socket_client(
-            sprintf('tcp://%s:%d', $validatedIp, $validatedPort),
+            $diagnosticTarget['address'],
             $errorCode,
             $errorMessage,
             2,
@@ -86,9 +114,9 @@ if ($ip !== '' || isset($_GET['port'])) {
         if (is_resource($socket)) {
             fclose($socket);
             $diagnosticMessage = sprintf(
-                'Connexion TCP reussie vers %s:%d.',
-                $validatedIp,
-                $validatedPort
+                'Connexion TCP reussie vers %s sur le port %d.',
+                $diagnosticTarget['label'],
+                $diagnosticTarget['port']
             );
             $diagnosticDetails = sprintf(
                 'Temps de reponse approx. : %d ms',
@@ -96,9 +124,9 @@ if ($ip !== '' || isset($_GET['port'])) {
             );
         } else {
             $diagnosticMessage = sprintf(
-                'Connexion TCP impossible vers %s:%d.',
-                $validatedIp,
-                $validatedPort
+                'Connexion TCP impossible vers %s sur le port %d.',
+                $diagnosticTarget['label'],
+                $diagnosticTarget['port']
             );
             $diagnosticDetails = $errorMessage !== ''
                 ? sprintf('Detail technique : %s (%d)', $errorMessage, $errorCode)
@@ -182,7 +210,7 @@ if ($ip !== '' || isset($_GET['port'])) {
 
     <div class="panel">
         <h3>Zone Admin : Diagnostic Reseau</h3>
-        <p>Verification d'accessibilite TCP d'un serveur interne.</p>
+        <p>Verification d'accessibilite TCP sur une cible interne autorisee.</p>
 
         <form method="GET">
             <input
@@ -191,24 +219,26 @@ if ($ip !== '' || isset($_GET['port'])) {
                 value="<?php echo escapeHtml($search); ?>"
             >
 
-            <label for="ip">IP a tester :</label>
-            <input
-                id="ip"
-                type="text"
-                name="ip"
-                placeholder="ex: 8.8.8.8"
-                value="<?php echo escapeHtml($ip); ?>"
-            >
-
-            <label for="port">Port :</label>
-            <input
-                id="port"
-                type="number"
-                name="port"
-                min="1"
-                max="65535"
-                value="<?php echo escapeHtml($portInput); ?>"
-            >
+            <label for="target">Cible :</label>
+            <select id="target" name="target">
+                <option value="">Selectionner une cible</option>
+                <?php foreach ($diagnosticTargets as $targetKey => $targetConfig) : ?>
+                    <option
+                        value="<?php echo escapeHtml($targetKey); ?>"
+                        <?php echo $targetId === $targetKey ? 'selected' : ''; ?>
+                    >
+                        <?php
+                        echo escapeHtml(
+                            sprintf(
+                                '%s (port %d)',
+                                $targetConfig['label'],
+                                $targetConfig['port']
+                            )
+                        );
+                        ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
 
             <button type="submit">Tester</button>
         </form>
