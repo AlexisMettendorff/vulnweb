@@ -2,9 +2,9 @@ name: Pipeline DevSecOps PHP
 
 on:
   push:
-    branches: ["main", "fix/lint_scan"]
+    branches: ["main"]
   pull_request:
-    branches: ["main", "fix/lint_scan"]
+    branches: ["main"]
     
 
 jobs:
@@ -21,12 +21,9 @@ jobs:
       - name: Scan secrets with TruffleHog
         uses: trufflesecurity/trufflehog@main
         with:
-        #   path: .
-        #   base: HEAD~1
-        #   head: HEAD
-          extra_args: --only-verified
-
-  # 🧹 Linter PHP (PHPCS)
+          extra_args: --results=verified,unknown
+          
+  # 🧹 Linter pour PHP (PHPCS)
   lint:
     runs-on: ubuntu-latest
     steps:
