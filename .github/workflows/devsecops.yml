@@ -21,7 +21,7 @@ jobs:
         uses: trufflesecurity/trufflehog@main
         with:
           path: .
-          extra_args: "github --repo https://github.com/trufflesecurity/test_keys --fail"          
+          extra_args: --fail          
           
   # 🧹 Linter PHP (PHPCS)
   lint:
