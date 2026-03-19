@@ -40,6 +40,7 @@ jobs:
 
       - name: Fix PHP style with PHPCBF (PSR-12)
         run: ~/.composer/vendor/bin/phpcbf src --standard=PSR12
+        continue-on-error: true
 
       - name: Run PHPCS (PSR-12)
         run: ~/.composer/vendor/bin/phpcs src --standard=PSR12
