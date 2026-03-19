@@ -1,6 +1,6 @@
 {
     "require": {
-        "phpmailer/phpmailer": "5.2.18"
+        "phpmailer/phpmailer": "5.2.20"
     },
     "config": {
         "audit": {
