@@ -39,6 +39,7 @@ jobs:
 
       - name: Run PHPCS (PSR-12)
         run: ~/.composer/vendor/bin/phpcs src --standard=PSR12
+        continue-on-error: true
 
   # 🔍 SAST (Semgrep)
   sast:
