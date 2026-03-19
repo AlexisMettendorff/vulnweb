@@ -22,7 +22,7 @@ jobs:
         with:
           extra_args: --results=verified,unknown
           
-  # 🧹 Linter PHP (PHPCS)
+  # 🧹 Linter pour PHP (PHPCS)
   lint:
     runs-on: ubuntu-latest
     steps:
