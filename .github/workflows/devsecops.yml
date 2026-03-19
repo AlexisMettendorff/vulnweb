@@ -20,9 +20,9 @@ jobs:
       - name: Scan secrets with TruffleHog
         uses: trufflesecurity/trufflehog@main
         with:
-          path: .
-          base: HEAD~1
-          head: HEAD
+        #   path: .
+        #   base: HEAD~1
+        #   head: HEAD
           extra_args: --only-verified
 
   # 🧹 Linter PHP (PHPCS)
