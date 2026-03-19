@@ -8,70 +8,23 @@ on:
 
 jobs:
 
-  # 🔍 Analyse statique (SAST)
-  sast:
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Init CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: php
-          build-mode: none
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
-
-      - name: Analyze
-        uses: github/codeql-action/analyze@v3
-
-  # 📦 Analyse des dépendances (SCA)
-  dependencies:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: 8.2
-
-      - name: Install dependencies (si composer présent)
-        run: |
-          if [ -f composer.json ]; then
-            composer install --no-interaction --prefer-dist
-          fi
-
-      - name: Audit dependencies
-        run: |
-          if [ -f composer.json ]; then
-            composer audit
-          else
-            echo "Pas de composer.json → skip audit"
-          fi
-
-  # 🛡️ Scan des secrets
+  # 🔐 Scan des secrets (TruffleHog)
   secrets-scan:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Scan secrets avec Gitleaks
-        uses: gitleaks/gitleaks-action@v2
+      - name: Scan secrets with TruffleHog
+        uses: trufflesecurity/trufflehog@v3
+        with:
+          path: .
+          base: HEAD~1
+          head: HEAD
 
-  # 🧪 Vérification basique PHP (lint)
-  php-lint:
+  # 🧹 Linter PHP (PHPCS)
+  lint:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -81,14 +34,57 @@ jobs:
         with:
           php-version: 8.2
 
-      - name: Lint PHP files
-        run: |
-          find . -type f -name "*.php" -exec php -l {} \;
+      - name: Install PHPCS
+        run: composer global require squizlabs/php_codesniffer
 
-  # 🌐 DAST (scan dynamique simple)
+      - name: Run PHPCS (PSR-12)
+        run: ~/.composer/vendor/bin/phpcs src --standard=PSR12
+
+  # 🔍 SAST (Semgrep)
+  sast:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: auto
+
+  # 📦 SCA (Trivy filesystem)
+  sca:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Trivy FS scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: table
+
+  # 🐳 Scan image Docker (Trivy Image)
+  image-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t my-php-app ./src
+
+      - name: Scan Docker image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: my-php-app
+          format: table
+
+  # 🌐 DAST (OWASP ZAP)
   dast:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -98,7 +94,7 @@ jobs:
           php -S localhost:8000 -t src &
           sleep 5
 
-      - name: Run OWASP ZAP scan
+      - name: Run OWASP ZAP baseline scan
         uses: zaproxy/action-baseline@v0.10.0
         with:
           target: "http://localhost:8000"
