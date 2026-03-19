@@ -108,3 +108,5 @@ jobs:
         with:
           target: "http://localhost:8000"
           out: $GITHUB_WORKSPACE/zap_reports
+        env:
+            ZAP_DOCKER_USER: root
