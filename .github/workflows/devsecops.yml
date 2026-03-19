@@ -104,10 +104,14 @@ jobs:
         run: mkdir -p $GITHUB_WORKSPACE/zap_reports && chmod -R 777 $GITHUB_WORKSPACE/zap_reports
 
       - name: Run OWASP ZAP baseline scan
-        uses: zaproxy/action-baseline@v0.10.0
+        uses: zaproxy/action-baseline@v0.14.0
         with:
           target: "http://localhost:8000"
-          out: $GITHUB_WORKSPACE/zap_reports
-          workspace: $GITHUB_WORKSPACE/zap_reports
-        env:
-            ZAP_DOCKER_USER: root
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a'
+
+      - name: Upload ZAP Report
+        uses: actions/upload-artifact@v4
+        with: 
+            name: zap-scan-report
+            path: report_html.html
