@@ -1,5 +1,14 @@
 <?php
 
+header("X-Frame-Options: DENY");
+header("X-Content-Type-Options: nosniff");
+header("X-XSS-Protection: 1; mode=block");
+header("Content-Security-Policy: default-src 'self'; script-src 'self'");
+header("Permissions-Policy: geolocation=(), camera=()");
+header("Cross-Origin-Embedder-Policy: require-corp");
+header("Cross-Origin-Opener-Policy: same-origin");
+header_remove("X-Powered-By");
+
 $config = require __DIR__ . '/config.php';
 
 function escapeHtml(string $value): string
