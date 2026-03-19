@@ -2,9 +2,10 @@ name: Pipeline DevSecOps PHP
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "fix/lint_scan"]
   pull_request:
-    branches: ["main"]
+    branches: ["main", "fix/lint_scan"]
+    
 
 jobs:
 
@@ -39,6 +40,9 @@ jobs:
 
       - name: Install PHPCS
         run: composer global require squizlabs/php_codesniffer
+
+      - name: Fix PHP style with PHPCBF (PSR-12)
+        run: ~/.composer/vendor/bin/phpcbf src --standard=PSR12
 
       - name: Run PHPCS (PSR-12)
         run: ~/.composer/vendor/bin/phpcs src --standard=PSR12
