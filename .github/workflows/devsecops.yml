@@ -14,14 +14,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+            fetch-depth: 0
 
       - name: Scan secrets with TruffleHog
         uses: trufflesecurity/trufflehog@main
         with:
-          path: .
-          base: HEAD~1
-          head: HEAD
-
+          extra_args: --results=verified,unknown
+          
   # 🧹 Linter PHP (PHPCS)
   lint:
     runs-on: ubuntu-latest
