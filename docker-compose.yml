@@ -2,26 +2,30 @@ services:
   web:
     container_name: devsecops-web
     volumes:
-        - ./src:/var/www/html
+      - ./src:/var/www/html
     build: ./src
     ports:
       - "8080:80"
     depends_on:
       - db
+    environment:
+      APP_DB_HOST: ${APP_DB_HOST:-devsecops-bdd}
+      APP_DB_NAME: ${APP_DB_NAME:-myapp}
+      APP_DB_USER: ${APP_DB_USER:-appuser}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:-app-password-dev}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
     networks:
       - devsecops_net
-    # Simulation d'une mauvaise pratique : pas de .env au début
-    # Les variables seront ajoutées lors de la correction de l'étape 1
 
   db:
     container_name: devsecops-bdd
     image: mariadb:10.5
     environment:
-      # MAUVAISE PRATIQUE : Secrets en clair
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: myapp
-      MYSQL_USER: appuser
-      MYSQL_PASSWORD: apppassword
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root-password-dev}
+      MYSQL_DATABASE: ${APP_DB_NAME:-myapp}
+      MYSQL_USER: ${APP_DB_USER:-appuser}
+      MYSQL_PASSWORD: ${APP_DB_PASSWORD:-app-password-dev}
     volumes:
       - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
