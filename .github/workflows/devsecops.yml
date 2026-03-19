@@ -2,9 +2,9 @@ name: Pipeline DevSecOps PHP
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "fix/sast-scan"]
   pull_request:
-    branches: ["main"]
+    branches: ["main", "fix/sast-scan"]
 
 jobs:
 
